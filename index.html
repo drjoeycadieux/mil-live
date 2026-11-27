@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#070d19" />
+  <title>Accès — Québec Vigilance</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070d19;
+      --panel: #0e192e;
+      --panel-raised: #111f37;
+      --border: rgba(148, 163, 184, .22);
+      --text: #f8fafc;
+      --muted: #9aa9bd;
+      --gold: #eab308;
+      --blue: #60a5fa;
+      --red: #fca5a5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 75% 15%, rgba(30, 58, 138, .22), transparent 42%),
+        var(--bg);
+      color: var(--text);
+    }
+    a { color: #93c5fd; }
+    .topbar {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px clamp(18px, 5vw, 64px);
+      border-bottom: 1px solid var(--border);
+      background: rgba(2, 6, 15, .55);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      width: 38px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--gold);
+      border-radius: 12px 12px 18px 18px;
+      color: var(--gold);
+      font-size: 19px;
+      font-weight: 900;
+    }
+    .brand-name { font-size: 13px; font-weight: 800; letter-spacing: 1.1px; }
+    .brand-sub { margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .public-label {
+      padding: 5px 9px;
+      border: 1px solid rgba(234, 179, 8, .35);
+      border-radius: 4px;
+      background: rgba(234, 179, 8, .08);
+      color: #fcd34d;
+      font: 10px ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+    main {
+      width: min(1050px, calc(100% - 32px));
+      margin: clamp(32px, 7vh, 78px) auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, .82fr);
+      gap: clamp(30px, 7vw, 88px);
+      align-items: center;
+    }
+    .intro-kicker {
+      color: var(--gold);
+      font: 11px ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+    }
+    h1 { margin: 13px 0 16px; font-size: clamp(32px, 4vw, 48px); line-height: 1.07; }
+    .intro-copy { max-width: 510px; color: #c1ccda; font-size: 15px; line-height: 1.7; }
+    .feature-list {
+      display: grid;
+      gap: 12px;
+      margin: 30px 0 0;
+      padding: 0;
+      list-style: none;
+      color: #cbd5e1;
+      font-size: 13px;
+    }
+    .feature-list li { display: flex; align-items: center; gap: 10px; }
+    .feature-list li::before {
+      width: 7px;
+      height: 7px;
+      flex: 0 0 7px;
+      border-radius: 50%;
+      background: var(--blue);
+      content: "";
+    }
+    .auth-card {
+      padding: clamp(20px, 4vw, 30px);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--gold);
+      border-radius: 12px;
+      background: linear-gradient(155deg, rgba(17, 31, 55, .97), rgba(10, 19, 35, .97));
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .35);
+    }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 22px; }
+    .tab {
+      padding: 10px 8px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 750;
+      cursor: pointer;
+    }
+    .tab[aria-selected="true"] { border-color: var(--border); background: rgba(5, 10, 20, .7); color: var(--text); }
+    h2 { margin: 0 0 7px; font-size: 20px; }
+    .form-help { margin: 0 0 20px; color: var(--muted); font-size: 12.5px; line-height: 1.55; }
+    .field { margin: 0 0 14px; }
+    label { display: block; margin-bottom: 6px; color: #d3dce8; font-size: 11px; font-weight: 750; letter-spacing: .45px; text-transform: uppercase; }
+    input, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      outline: none;
+      background: #070e1a;
+      color: var(--text);
+      font: inherit;
+      font-size: 13px;
+    }
+    input { min-height: 42px; padding: 9px 11px; }
+    textarea { min-height: 82px; resize: vertical; padding: 10px 11px; }
+    input:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(96, 165, 250, .12); }
+    .submit {
+      width: 100%;
+      min-height: 43px;
+      margin-top: 4px;
+      border: 1px solid #facc15;
+      border-radius: 6px;
+      background: var(--gold);
+      color: #111827;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .submit:hover { background: #facc15; }
+    .submit:disabled { cursor: wait; opacity: .65; }
+    .forgot {
+      display: block;
+      margin: 12px 0 0 auto;
+      border: 0;
+      background: none;
+      color: #93c5fd;
+      font: inherit;
+      font-size: 12px;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .status {
+      margin: 0 0 16px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: #cbd5e1;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .status:empty { display: none; }
+    .status[data-kind="error"] { border-color: rgba(248, 113, 113, .45); color: var(--red); }
+    .status[data-kind="success"] { border-color: rgba(52, 211, 153, .4); color: #6ee7b7; }
+    .status[data-kind="info"] { border-color: rgba(96, 165, 250, .4); color: #bfdbfe; }
+    .footnote { margin: 16px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; text-align: center; }
+    footer { padding: 18px; color: #8290a4; font-size: 11px; text-align: center; }
+    [hidden] { display: none !important; }
+
+    @media (max-width: 760px) {
+      main { grid-template-columns: 1fr; gap: 26px; margin-top: 32px; }
+      .intro-copy { font-size: 14px; }
+      .feature-list { margin-top: 20px; }
+      .public-label { font-size: 9px; }
+    }
+    @media (max-width: 420px) {
+      .brand-name { font-size: 11px; }
+      .brand-sub { font-size: 10px; }
+      .topbar { padding-inline: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">Q</div>
+      <div>
+        <div class="brand-name">QUÉBEC VIGILANCE</div>
+        <div class="brand-sub">Centre de veille &amp; sécurité publique</div>
+      </div>
+    </div>
+    <span class="public-label">Portail d’accès public</span>
+  </header>
+
+  <main>
+    <section aria-labelledby="pageTitle">
+      <div class="intro-kicker">Information civique • Québec</div>
+      <h1 id="pageTitle">Un regard clair sur la situation.</h1>
+      <p class="intro-copy">
+        Québec Vigilance rassemble des données publiques sur la sécurité civile,
+        les conditions routières et les urgences. Demandez un accès; chaque demande
+        est examinée avant l’activation d’un compte.
+      </p>
+      <ul class="feature-list">
+        <li>Sources de données publiques et ouvertes</li>
+        <li>Carte régionale et bulletins de situation</li>
+        <li>Accès activé individuellement après approbation</li>
+      </ul>
+    </section>
+
+    <section class="auth-card" aria-label="Accès au portail">
+      <div class="tabs" role="tablist" aria-label="Options d’accès">
+        <button class="tab" id="loginTab" type="button" role="tab" aria-selected="true" aria-controls="loginPanel">Connexion</button>
+        <button class="tab" id="requestTab" type="button" role="tab" aria-selected="false" aria-controls="requestPanel">Demander un accès</button>
+      </div>
+
+      <div id="statusMessage" class="status" role="status" aria-live="polite"></div>
+
+      <section id="loginPanel" role="tabpanel" aria-labelledby="loginTab">
+        <h2>Connexion au portail</h2>
+        <p class="form-help">Utilisez l’adresse courriel et le mot de passe associés à votre compte approuvé.</p>
+        <form id="loginForm" method="post">
+          <div class="field">
+            <label for="loginEmail">Adresse courriel</label>
+            <input id="loginEmail" name="email" type="email" autocomplete="username" maxlength="254" required />
+          </div>
+          <div class="field">
+            <label for="loginPassword">Mot de passe</label>
+            <input id="loginPassword" name="password" type="password" autocomplete="current-password" required />
+          </div>
+          <button class="submit" id="loginSubmit" type="submit">Se connecter</button>
+          <button class="forgot" id="resetPasswordBtn" type="button">Mot de passe oublié?</button>
+        </form>
+      </section>
+
+      <section id="requestPanel" role="tabpanel" aria-labelledby="requestTab" hidden>
+        <h2>Demander un accès</h2>
+        <p class="form-help">Fournissez vos coordonnées et la raison de votre demande. Aucun mot de passe n’est demandé ici.</p>
+        <form id="requestForm" method="post">
+          <div class="field">
+            <label for="requestName">Nom complet</label>
+            <input id="requestName" name="name" type="text" autocomplete="name" maxlength="100" required />
+          </div>
+          <div class="field">
+            <label for="requestEmail">Adresse courriel</label>
+            <input id="requestEmail" name="email" type="email" autocomplete="email" maxlength="254" required />
+          </div>
+          <div class="field">
+            <label for="requestOrganization">Organisation (facultatif)</label>
+            <input id="requestOrganization" name="organization" type="text" autocomplete="organization" maxlength="120" />
+          </div>
+          <div class="field">
+            <label for="requestReason">Pourquoi souhaitez-vous accéder au portail?</label>
+            <textarea id="requestReason" name="reason" maxlength="1000" required></textarea>
+          </div>
+          <button class="submit" id="requestSubmit" type="submit">Envoyer la demande</button>
+        </form>
+      </section>
+      <p class="footnote">Les demandes sont examinées manuellement. Une approbation ne crée pas automatiquement un compte.</p>
+    </section>
+  </main>
+
+  <footer>
+    Plateforme indépendante d’information publique; non affiliée aux services policiers ou gouvernementaux.
+    En cas d’urgence, composez le 9-1-1.
+  </footer>
+
+  <script>
+    window.portalModuleLoaded = false;
+    document.querySelectorAll('form').forEach(form => {
+      form.addEventListener('submit', event => event.preventDefault());
+    });
+    window.setTimeout(() => {
+      if (!window.portalModuleLoaded) {
+        const status = document.getElementById('statusMessage');
+        status.textContent = 'Impossible de charger le service de connexion. Vérifiez votre connexion et la configuration Firebase.';
+        status.dataset.kind = 'error';
+      }
+    }, 10000);
+  </script>
+
+  <script type="module">
+    import {
+      firebaseConfigured,
+      requireApprovedUser,
+      requestAccess,
+      resetPassword,
+      signInApprovedUser
+    } from './firebase-auth.js';
+
+    window.portalModuleLoaded = true;
+    const status = document.getElementById('statusMessage');
+    const loginTab = document.getElementById('loginTab');
+    const requestTab = document.getElementById('requestTab');
+    const loginPanel = document.getElementById('loginPanel');
+    const requestPanel = document.getElementById('requestPanel');
+
+    function showStatus(message, kind = 'info') {
+      status.textContent = message;
+      status.dataset.kind = kind;
+    }
+
+    function errorMessage(error) {
+      if (error.code === 'access/pending') {
+        return 'Votre demande n’a pas encore été approuvée, ou votre compte n’est pas encore activé.';
+      }
+      if (!firebaseConfigured) {
+        return 'Le portail doit être configuré avec les paramètres de votre projet Firebase avant utilisation. Consultez FIREBASE_SETUP.md.';
+      }
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        return 'Adresse courriel ou mot de passe invalide.';
+      }
+      if (error.code === 'auth/too-many-requests') {
+        return 'Trop de tentatives. Veuillez patienter avant de réessayer.';
+      }
+      if (error.code === 'auth/invalid-email') {
+        return 'Veuillez saisir une adresse courriel valide.';
+      }
+      if (error.code === 'auth/user-disabled') {
+        return 'Ce compte est désactivé. Contactez l’administrateur.';
+      }
+      return 'La demande n’a pas pu être traitée. Vérifiez la configuration Firebase et réessayez.';
+    }
+
+    function setPanel(panel) {
+      const showLogin = panel === 'login';
+      loginPanel.hidden = !showLogin;
+      requestPanel.hidden = showLogin;
+      loginTab.setAttribute('aria-selected', String(showLogin));
+      requestTab.setAttribute('aria-selected', String(!showLogin));
+      status.textContent = '';
+      delete status.dataset.kind;
+      (showLogin ? document.getElementById('loginEmail') : document.getElementById('requestName')).focus();
+    }
+
+    loginTab.addEventListener('click', () => setPanel('login'));
+    requestTab.addEventListener('click', () => setPanel('request'));
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reason') === 'setup') {
+      showStatus('Impossible de vérifier l’accès. Vérifiez la configuration Firebase et les règles Firestore.', 'error');
+    } else if (params.get('reason') === 'login') {
+      showStatus('Veuillez vous connecter avec un compte approuvé pour ouvrir le portail.', 'info');
+    }
+
+    if (!firebaseConfigured) {
+      showStatus('Configuration requise : ajoutez les paramètres de votre projet Firebase dans firebase-config.js. Voir FIREBASE_SETUP.md.', 'error');
+    } else {
+      try {
+        if (await requireApprovedUser()) window.location.replace('home.html');
+      } catch (error) {
+        console.error('Unable to check existing sign-in:', error);
+        showStatus(errorMessage(error), 'error');
+      }
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      const button = document.getElementById('loginSubmit');
+      button.disabled = true;
+      try {
+        await signInApprovedUser(
+          document.getElementById('loginEmail').value,
+          document.getElementById('loginPassword').value
+        );
+        window.location.assign('home.html');
+      } catch (error) {
+        console.error('Sign-in failed:', error);
+        showStatus(errorMessage(error), 'error');
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    document.getElementById('requestForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      const button = document.getElementById('requestSubmit');
+      button.disabled = true;
+      const values = new FormData(event.currentTarget);
+      try {
+        await requestAccess({
+          name: values.get('name'),
+          email: values.get('email'),
+          organization: values.get('organization'),
+          reason: values.get('reason')
+        });
+        event.currentTarget.reset();
+        showStatus('Votre demande a été envoyée. Elle sera examinée avant toute activation de compte.', 'success');
+      } catch (error) {
+        console.error('Access request failed:', error);
+        showStatus(errorMessage(error), 'error');
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    document.getElementById('resetPasswordBtn').addEventListener('click', async () => {
+      const email = document.getElementById('loginEmail').value.trim();
+      if (!email) {
+        showStatus('Saisissez votre adresse courriel pour recevoir un lien de réinitialisation.', 'info');
+        document.getElementById('loginEmail').focus();
+        return;
+      }
+      try {
+        await resetPassword(email);
+        showStatus('Si un compte existe pour cette adresse, un lien de réinitialisation lui sera envoyé.', 'success');
+      } catch (error) {
+        console.error('Password reset failed:', error);
+        showStatus(errorMessage(error), 'error');
+      }
+    });
+  </script>
+</body>
+</html>

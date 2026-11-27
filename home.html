@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QUÉBEC VIGILANCE — Portail de Sécurité Publique &amp; Veille Opérationnelle</title>
+
+  <!-- Pure Leaflet.js & MarkerCluster (No CartoDB) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+  <style>
+    :root {
+      --bg-base: #050a14;
+      --bg-navy: #091224;
+      --bg-card: #0e192e;
+      --bg-card-hover: #14233f;
+      --border: rgba(148, 163, 184, 0.22);
+      --border-gold: rgba(234, 179, 8, 0.45);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --gold: #eab308;
+      --gold-dim: rgba(234, 179, 8, 0.14);
+      --crimson: #dc2626;
+      --crimson-bright: #ef4444;
+      --blue-tactical: #38bdf8;
+      --emerald: #10b981;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* Top Official Utility Strip */
+    .utility-bar {
+      background: #02050b;
+      border-bottom: 1px solid var(--border);
+      padding: 6px 24px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .utility-left { display: flex; align-items: center; gap: 14px; }
+    .utility-badge {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--gold);
+      border: 1px solid var(--border-gold);
+      background: var(--gold-dim);
+      padding: 1px 7px;
+      border-radius: 3px;
+      letter-spacing: 0.6px;
+      font-weight: 700;
+    }
+    .utility-right { display: flex; align-items: center; gap: 16px; font-family: var(--font-mono); font-size: 11px; }
+    .lang-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 2px 9px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .lang-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* Main Command Header */
+    .command-header {
+      background: linear-gradient(180deg, #0b162c 0%, #070e1d 100%);
+      border-bottom: 2px solid var(--gold);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 1100;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.65);
+    }
+    .emblem-wrap { display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; }
+    .emblem-title { font-size: 20px; font-weight: 800; letter-spacing: 1.4px; color: #fff; line-height: 1.1; }
+    .emblem-sub { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--gold); font-weight: 600; margin-top: 2px; }
+
+    .nav-links { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .nav-links a {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 12.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      padding: 6px 2px;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .nav-links a:hover { color: var(--gold); border-bottom-color: var(--gold); }
+
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+    .btn-911 {
+      background: rgba(220, 38, 38, 0.18);
+      border: 1px solid var(--crimson-bright);
+      color: #fecaca;
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-tip {
+      background: var(--gold);
+      color: #050a14;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(234, 179, 8, 0.35);
+    }
+    .btn-tip:hover { background: #facc15; }
+
+    /* Live Breaking Alert Ticker */
+    .alert-ribbon {
+      background: linear-gradient(90deg, #7f1d1d 0%, #991b1b 50%, #7f1d1d 100%);
+      border-bottom: 1px solid rgba(254, 202, 202, 0.3);
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 12.5px;
+    }
+    .ribbon-tag {
+      background: #fff;
+      color: #991b1b;
+      font-family: var(--font-mono);
+      font-weight: 900;
+      font-size: 10.5px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      animation: pulse 2s infinite;
+    }
+    .ribbon-text { color: #fef2f2; font-weight: 600; flex: 1; }
+
+    /* Container */
+    .container { max-width: 1380px; margin: 0 auto; padding: 24px; }
+
+    /* Hero Banner */
+    .hero-panel {
+      background: radial-gradient(circle at top right, rgba(30, 58, 138, 0.35), transparent 60%),
+                  linear-gradient(135deg, #0b1528 0%, #070d19 100%);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--gold);
+      border-radius: 10px;
+      padding: 26px 28px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .hero-kicker {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+    .hero-title { font-size: 26px; font-weight: 800; letter-spacing: 0.3px; margin-bottom: 8px; color: #fff; }
+    .hero-desc { color: var(--text-muted); font-size: 13.5px; max-width: 720px; }
+    .hero-cta-group { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-primary-tactical {
+      background: #1d4ed8;
+      border: 1px solid #60a5fa;
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .btn-primary-tactical:hover { background: #2563eb; }
+    .btn-outline-tactical {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border);
+      color: #e2e8f0;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+    }
+    .btn-outline-tactical:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* KPI Command Strip */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--blue-tactical);
+      border-radius: 8px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .kpi-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); font-weight: 700; }
+    .kpi-status { font-family: var(--font-mono); font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 700; }
+    .st-live { background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .st-proxy { background: rgba(234, 179, 8, 0.16); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4); }
+    .st-err { background: rgba(239, 68, 68, 0.16); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .kpi-value { font-family: var(--font-mono); font-size: 28px; font-weight: 800; color: #fff; line-height: 1.1; }
+    .kpi-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; }
+
+    /* Section Headings */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: #fff;
+    }
+    .section-bar { width: 4px; height: 18px; background: var(--gold); border-radius: 2px; }
+
+    /* Tactical Map Workstation */
+    .map-workstation {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 28px;
+      min-height: 560px;
+    }
+    @media (max-width: 960px) {
+      .map-workstation { grid-template-columns: 1fr; }
+      #map { height: 460px; }
+    }
+    .map-sidebar {
+      background: #081020;
+      border-right: 1px solid var(--border);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .filter-input {
+      width: 100%;
+      background: #050a14;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 9px 11px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      outline: none;
+    }
+    .filter-input:focus { border-color: var(--gold); }
+
+    .layer-toggle {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 11px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-size: 12.5px;
+      font-weight: 600;
+    }
+    .layer-toggle:hover { border-color: rgba(234, 179, 8, 0.5); }
+    .layer-toggle input { accent-color: var(--gold); width: 15px; height: 15px; margin-right: 8px; }
+    .layer-count { font-family: var(--font-mono); font-size: 11px; background: #050a14; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border); }
+
+    .sector-pills { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .sector-pill {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: #cbd5e1;
+      padding: 6px;
+      border-radius: 5px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+    }
+    .sector-pill:hover { border-color: var(--gold); color: var(--gold); }
+
+    #map { width: 100%; height: 100%; min-height: 560px; background: #050a14; z-index: 1; }
+    .osm-tactical-tiles { filter: invert(100%) hue-rotate(180deg) brightness(91%) contrast(95%) saturate(70%); }
+
+    /* Leaflet Dark Overrides */
+    .leaflet-control-layers, .leaflet-control-zoom a {
+      background: #091224 !important;
+      color: #f8fafc !important;
+      border-color: var(--border) !important;
+    }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+      background: #0b1528 !important;
+      color: #f8fafc !important;
+      border: 1px solid var(--border-gold);
+      border-radius: 8px !important;
+    }
+    .leaflet-popup-content { font-size: 12.5px; line-height: 1.45; min-width: 230px; }
+    .pop-cam-img { width: 100%; height: 145px; object-fit: cover; border-radius: 6px; margin-top: 6px; border: 1px solid var(--border); }
+
+    /* Custom Pins */
+    .pin-msp {
+      width: 24px; height: 24px; border-radius: 50%; background: #dc2626; border: 2px solid #fff;
+      color: #fff; font-weight: 900; font-size: 12px; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 12px rgba(220, 38, 38, 0.9);
+    }
+    .pin-er {
+      padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 10.5px; font-weight: 800;
+      color: #fff; border: 1.5px solid #fff; white-space: nowrap;
+    }
+    .pin-road {
+      width: 20px; height: 20px; border-radius: 4px; background: #d97706; border: 1.5px solid #fef3c7;
+      color: #fff; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center;
+    }
+    .pin-cam {
+      width: 20px; height: 20px; border-radius: 50%; background: #0284c7; border: 1.5px solid #e0f2fe;
+      color: #fff; display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Bulletins & Advisories Grid */
+    .bulletins-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .bulletin-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--gold);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .bulletin-card:hover { transform: translateY(-2px); border-color: var(--gold); }
+    .bulletin-meta { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono); font-size: 10.5px; }
+    .bulletin-badge { padding: 2px 7px; border-radius: 3px; font-weight: 800; text-transform: uppercase; }
+    .bulletin-title { font-size: 14.5px; font-weight: 700; color: #fff; }
+    .bulletin-body { font-size: 12.5px; color: var(--text-muted); }
+    .bulletin-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted); }
+    .btn-details {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--gold);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-details:hover { background: var(--gold-dim); border-color: var(--gold); }
+
+    /* Emergency Directory Cards */
+    .directory-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+    .dir-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .dir-num { font-family: var(--font-mono); font-size: 20px; font-weight: 800; color: var(--gold); margin-bottom: 4px; }
+    .dir-name { font-size: 13.5px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .dir-desc { font-size: 12px; color: var(--text-muted); }
+
+    /* Official Footer */
+    .official-footer {
+      background: #030711;
+      border-top: 2px solid var(--border);
+      padding: 24px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .footer-inner {
+      max-width: 1380px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .disclaimer-box {
+      background: rgba(234, 179, 8, 0.08);
+      border: 1px solid var(--border-gold);
+      border-radius: 6px;
+      padding: 10px 14px;
+      max-width: 680px;
+      color: #e2e8f0;
+      font-size: 11.5px;
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.82);
+      backdrop-filter: blur(6px);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-box {
+      background: #0b1528;
+      border: 1px solid var(--border-gold);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 500px;
+      padding: 22px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    .modal-title { font-size: 16px; font-weight: 800; color: var(--gold); text-transform: uppercase; letter-spacing: 0.6px; }
+    .close-modal { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 11.5px; font-weight: 700; text-transform: uppercase; color: #cbd5e1; margin-bottom: 5px; }
+    .form-control {
+      width: 100%;
+      background: #050a14;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 9px 11px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .form-control:focus { border-color: var(--gold); outline: none; }
+
+    body.auth-checking > :not(#authLoading) { visibility: hidden; }
+    #authLoading {
+      position: fixed;
+      inset: 0;
+      z-index: 3000;
+      display: grid;
+      place-items: center;
+      background: var(--bg-base);
+      color: var(--text-muted);
+      font: 13px var(--font-mono);
+    }
+    body:not(.auth-checking) #authLoading { display: none; }
+    .account-email { color: var(--text-muted); font: 11px var(--font-mono); }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+  </style>
+</head>
+<body class="auth-checking">
+  <div id="authLoading" role="status">Vérification de l’accès…</div>
+
+  <!-- Top Utility Bar -->
+  <div class="utility-bar">
+    <div class="utility-left">
+      <span class="utility-badge" data-i18n="badge_open">VEILLE CITOYENNE • DONNÉES OUVERTES QC</span>
+      <span data-i18n="util_sub">Agrégation en temps réel : MSP • MTMD 511 • MSSS</span>
+    </div>
+    <div class="utility-right">
+      <span id="clockEst">EST --:--:--</span>
+      <span>|</span>
+      <span id="clockUtc">UTC --:--:--</span>
+      <button id="langToggleBtn" class="lang-btn">EN</button>
+    </div>
+  </div>
+
+  <!-- Main Law-Enforcement Style Command Header -->
+  <header class="command-header">
+    <a href="#" class="emblem-wrap">
+      <!-- Custom Open-Data Tactical Shield Emblem -->
+      <svg width="42" height="46" viewBox="0 0 42 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 2L39 9V22C39 33.5 31.3 41.8 21 44C10.7 41.8 3 33.5 3 22V9L21 2Z" fill="#0F1F3D" stroke="#EAB308" stroke-width="2.5"/>
+        <path d="M21 6L35 11.5V22C35 31.1 28.9 37.8 21 39.8C13.1 37.8 7 31.1 7 22V11.5L21 6Z" stroke="#38BDF8" stroke-width="1" stroke-opacity="0.55"/>
+        <circle cx="21" cy="22" r="6" stroke="#EAB308" stroke-width="2"/>
+        <line x1="21" y1="12" x2="21" y2="16" stroke="#EAB308" stroke-width="2"/>
+        <line x1="21" y1="28" x2="21" y2="32" stroke="#EAB308" stroke-width="2"/>
+        <line x1="11" y1="22" x2="15" y2="22" stroke="#EAB308" stroke-width="2"/>
+        <line x1="27" y1="22" x2="31" y2="22" stroke="#EAB308" stroke-width="2"/>
+      </svg>
+      <div>
+        <div class="emblem-title">QUÉBEC VIGILANCE</div>
+        <div class="emblem-sub" data-i18n="brand_sub">Centre de Veille &amp; Sécurité Publique</div>
+      </div>
+    </a>
+
+    <nav class="nav-links">
+      <a href="#section-status" data-i18n="nav_status">État du Réseau</a>
+      <a href="#section-map" data-i18n="nav_map">Carte Tactique</a>
+      <a href="#section-bulletins" data-i18n="nav_bulletins">Bulletins &amp; Avis</a>
+      <a href="#section-directory" data-i18n="nav_directory">Ressources d'Urgence</a>
+    </nav>
+
+    <div class="header-actions">
+      <span id="accountEmail" class="account-email"></span>
+      <button id="signOutBtn" class="btn-outline-tactical" type="button">Déconnexion</button>
+      <div class="btn-911">
+        <span>🚨</span>
+        <span data-i18n="urgency_911">URGENCE : 9-1-1</span>
+      </div>
+      <button id="openTipModalBtn" class="btn-tip" data-i18n="btn_report">Transmettre un Signalement</button>
+    </div>
+  </header>
+
+  <!-- Active Alert Ribbon -->
+  <div class="alert-ribbon">
+    <span class="ribbon-tag" data-i18n="ribbon_tag">DIRECT OPÉRATIONNEL</span>
+    <div id="ribbonText" class="ribbon-text">Synchronisation des flux officiels Données Québec, Québec 511 et MSSS en cours...</div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="container">
+
+    <!-- Command Hero -->
+    <section class="hero-panel">
+      <div>
+        <div class="hero-kicker" data-i18n="hero_kicker">POSTE DE COMMANDEMENT CIVIQUE • SURVEILLANCE PROVINCIALE</div>
+        <h1 class="hero-title" data-i18n="hero_title">Surveillance en Temps Réel des Incidents &amp; Infrastructures</h1>
+        <p class="hero-desc" data-i18n="hero_desc">
+          Plateforme unifiée d'information publique regroupant les événements de sécurité civile (MSP), les entraves et caméras du réseau routier (Québec 511) ainsi que la capacité hospitalière des urgences (MSSS).
+        </p>
+      </div>
+      <div class="hero-cta-group">
+        <a href="#section-map" class="btn-primary-tactical" data-i18n="hero_btn_map">Ouvrir la Carte Tactique</a>
+        <button id="refreshAllBtn" class="btn-outline-tactical" data-i18n="hero_btn_sync">Actualiser les Flux</button>
+      </div>
+    </section>
+
+    <!-- Live KPI Command Strip -->
+    <section id="section-status" class="kpi-grid">
+      <div class="kpi-card" style="border-top-color:#ef4444;">
+        <div class="kpi-top">
+          <span class="kpi-label" data-i18n="kpi_msp">Sécurité Civile (MSP)</span>
+          <span id="badgeMsp" class="kpi-status st-live">INIT</span>
+        </div>
+        <div id="valMsp" class="kpi-value">--</div>
+        <div class="kpi-sub" data-i18n="kpi_msp_sub">Événements actifs &amp; en surveillance</div>
+      </div>
+
+      <div class="kpi-card" style="border-top-color:#f59e0b;">
+        <div class="kpi-top">
+          <span class="kpi-label" data-i18n="kpi_road">Entraves Routières (511)</span>
+          <span id="badgeRoad" class="kpi-status st-live">INIT</span>
+        </div>
+        <div id="valRoad" class="kpi-value">--</div>
+        <div class="kpi-sub" data-i18n="kpi_road_sub">Chantiers et fermetures MTMD</div>
+      </div>
+
+      <div class="kpi-card" style="border-top-color:#38bdf8;">
+        <div class="kpi-top">
+          <span class="kpi-label" data-i18n="kpi_cam">Caméras de Surveillance</span>
+          <span id="badgeCam" class="kpi-status st-live">INIT</span>
+        </div>
+        <div id="valCam" class="kpi-value">--</div>
+        <div class="kpi-sub" data-i18n="kpi_cam_sub">Flux visuels réseau autoroutier</div>
+      </div>
+
+      <div class="kpi-card" style="border-top-color:#a855f7;">
+        <div class="kpi-top">
+          <span class="kpi-label" data-i18n="kpi_er">Occupation Urgences (MSSS)</span>
+          <span id="badgeEr" class="kpi-status st-live">INIT</span>
+        </div>
+        <div id="valEr" class="kpi-value">--%</div>
+        <div class="kpi-sub" data-i18n="kpi_er_sub">Taux moyen sur civières (Québec)</div>
+      </div>
+    </section>
+
+    <!-- Tactical Leaflet Map Workstation -->
+    <section id="section-map">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-bar"></span>
+          <span data-i18n="map_sec_title">Carte Opérationnelle Multi-Flux (Leaflet / OpenStreetMap)</span>
+        </div>
+        <span id="lastSyncLabel" style="font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted);">Dernière synchro: --:--:--</span>
+      </div>
+
+      <div class="map-workstation">
+        <aside class="map-sidebar">
+          <div>
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--gold); font-weight:700; margin-bottom:6px;" data-i18n="filter_lbl">Recherche &amp; Filtrage</div>
+            <input id="mapSearchInput" class="filter-input" type="text" placeholder="Ville, autoroute, hôpital, aléa..." />
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:7px;">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--gold); font-weight:700;" data-i18n="layers_lbl">Couches de Données</div>
+
+            <label class="layer-toggle">
+              <span><input type="checkbox" id="chkMsp" checked /><span data-i18n="lyr_msp">Sécurité civile (MSP)</span></span>
+              <span id="cntMsp" class="layer-count">0</span>
+            </label>
+
+            <label class="layer-toggle">
+              <span><input type="checkbox" id="chkEr" checked /><span data-i18n="lyr_er">Urgences Hôpitaux (MSSS)</span></span>
+              <span id="cntEr" class="layer-count">0</span>
+            </label>
+
+            <label class="layer-toggle">
+              <span><input type="checkbox" id="chkRoad" checked /><span data-i18n="lyr_road">Entraves &amp; Travaux (511)</span></span>
+              <span id="cntRoad" class="layer-count">0</span>
+            </label>
+
+            <label class="layer-toggle">
+              <span><input type="checkbox" id="chkCam" checked /><span data-i18n="lyr_cam">Caméras Routières (511)</span></span>
+              <span id="cntCam" class="layer-count">0</span>
+            </label>
+          </div>
+
+          <div>
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--gold); font-weight:700; margin-bottom:6px;" data-i18n="sectors_lbl">Secteurs Régionales</div>
+            <div class="sector-pills">
+              <button class="sector-pill" data-lat="45.52" data-lng="-73.60" data-zoom="11">Montréal</button>
+              <button class="sector-pill" data-lat="46.81" data-lng="-71.22" data-zoom="11">Québec</button>
+              <button class="sector-pill" data-lat="45.57" data-lng="-73.72" data-zoom="12">Laval</button>
+              <button class="sector-pill" data-lat="45.47" data-lng="-73.45" data-zoom="11">Rive-Sud</button>
+              <button class="sector-pill" data-lat="45.45" data-lng="-75.72" data-zoom="11">Gatineau</button>
+              <button class="sector-pill" data-lat="45.40" data-lng="-71.89" data-zoom="11">Sherbrooke</button>
+            </div>
+          </div>
+
+          <div style="margin-top:auto; font-size:11px; color:var(--text-muted); border-top:1px solid var(--border); padding-top:10px;">
+            <span data-i18n="auto_sync_note">Actualisation automatique toutes les 3 minutes. Cliquez sur un marqueur pour les détails techniques.</span>
+          </div>
+        </aside>
+
+        <div id="map"></div>
+      </div>
+    </section>
+
+    <!-- Operational Bulletins & Public Advisories -->
+    <section id="section-bulletins">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-bar"></span>
+          <span data-i18n="bul_sec_title">Bulletins Opérationnels &amp; Avis Publics</span>
+        </div>
+        <span style="font-size:11.5px; color:var(--text-muted);" data-i18n="bul_sec_sub">Générés à partir des flux actifs MSP, MSSS et signalements citoyens</span>
+      </div>
+
+      <div id="bulletinsGrid" class="bulletins-grid"></div>
+    </section>
+
+    <!-- Emergency Directory -->
+    <section id="section-directory">
+      <div class="section-header">
+        <div class="section-title">
+          <span class="section-bar"></span>
+          <span data-i18n="dir_sec_title">Répertoire des Services d'Urgence &amp; Assistance</span>
+        </div>
+      </div>
+
+      <div class="directory-grid">
+        <div class="dir-card">
+          <div class="dir-num">9-1-1</div>
+          <div class="dir-name" data-i18n="dir_911_t">Urgence Vitale (Police • Pompiers • Ambulance)</div>
+          <div class="dir-desc" data-i18n="dir_911_d">Pour tout danger immédiat pour la vie, la sécurité ou les biens partout au Québec.</div>
+        </div>
+        <div class="dir-card">
+          <div class="dir-num">5-1-1</div>
+          <div class="dir-name" data-i18n="dir_511_t">Québec 511 — Info-Transports</div>
+          <div class="dir-desc" data-i18n="dir_511_d">État des routes, fermetures majeures, conditions hivernales et traversiers (MTMD).</div>
+        </div>
+        <div class="dir-card">
+          <div class="dir-num">8-1-1</div>
+          <div class="dir-name" data-i18n="dir_811_t">Info-Santé &amp; Info-Social</div>
+          <div class="dir-desc" data-i18n="dir_811_d">Consultation téléphonique confidentielle 24/7 avec une infirmière ou un intervenant social.</div>
+        </div>
+        <div class="dir-card">
+          <div class="dir-num">1-800-711-1800</div>
+          <div class="dir-name" data-i18n="dir_infocrime_t">Échec au Crime Québec (Anonyme)</div>
+          <div class="dir-desc" data-i18n="dir_infocrime_d">Transmission confidentielle et anonyme d'informations liées à des activités criminelles.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="official-footer">
+    <div class="footer-inner">
+      <div>
+        <div style="font-weight:800; color:#fff; letter-spacing:0.8px; margin-bottom:4px;">QUÉBEC VIGILANCE — PORTAIL DE VEILLE CIVIQUE</div>
+        <div data-i18n="footer_sources">Sources ouvertes (CC-BY 4.0) : Données Québec, Ministère de la Sécurité publique (MSP), Ministère des Transports (MTMD) et Ministère de la Santé (MSSS).</div>
+      </div>
+      <div class="disclaimer-box" data-i18n="footer_disclaimer">
+        <strong>AVIS IMPORTANT :</strong> Ce portail est une plateforme indépendante d'agrégation de données publiques ouvertes. Il n'est pas affilié à la Sûreté du Québec (SQ), au SPVM ni à un corps policier municipal. En cas d'urgence immédiate, composez toujours le <strong>9-1-1</strong>.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Citizen Report / Tip Modal -->
+  <div id="tipModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div class="modal-title" data-i18n="modal_tip_title">Transmettre un Signalement Citoyen</div>
+        <button id="closeTipModal" class="close-modal">&times;</button>
+      </div>
+      <form id="tipForm">
+        <div class="form-group">
+          <label data-i18n="lbl_cat">Catégorie d'observation</label>
+          <select id="tipCategory" class="form-control" required>
+            <option value="Entrave / Danger routier">Entrave / Danger routier</option>
+            <option value="Inondation / Aléa météo">Inondation / Aléa météo</option>
+            <option value="Panne d'infrastructure">Panne d'infrastructure / Feux de circulation</option>
+            <option value="Avis communautaire">Avis communautaire / Vigilance</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="lbl_city">Municipalité / Intersection</label>
+          <input id="tipLocation" class="form-control" type="text" placeholder="Ex: Montréal — Boul. Saint-Laurent / Rue Jean-Talon" required />
+        </div>
+        <div class="form-group">
+          <label data-i18n="lbl_desc">Description factuelle</label>
+          <textarea id="tipDesc" class="form-control" rows="3" placeholder="Décrivez brièvement la situation observée..." required></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px;">
+          <button type="button" id="cancelTipBtn" class="btn-outline-tactical" data-i18n="btn_cancel">Annuler</button>
+          <button type="submit" class="btn-tip" data-i18n="btn_submit">Enregistrer le Signalement</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bulletin Detail Modal -->
+  <div id="detailModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div id="detailModalTag" class="modal-title">DÉTAIL OPÉRATIONNEL</div>
+        <button id="closeDetailModal" class="close-modal">&times;</button>
+      </div>
+      <div id="detailModalBody" style="font-size:13.5px; color:#e2e8f0; line-height:1.6;"></div>
+    </div>
+  </div>
+
+  <!-- Scripts: Pure Leaflet.js & MarkerCluster -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <script>
+    window.dashboardAuthModuleLoaded = false;
+    window.setTimeout(() => {
+      if (!window.dashboardAuthModuleLoaded) {
+        window.location.replace('index.html?reason=setup');
+      }
+    }, 15000);
+  </script>
+
+  <script type="module">
+    import { requireApprovedUser, signOutCurrentUser } from './firebase-auth.js';
+
+    window.dashboardAuthModuleLoaded = true;
+    try {
+      const user = await requireApprovedUser();
+      if (!user) {
+        window.location.replace('index.html?reason=login');
+      } else {
+        document.getElementById('accountEmail').textContent = user.email || '';
+        document.getElementById('signOutBtn').addEventListener('click', async () => {
+          try {
+            await signOutCurrentUser();
+            window.location.replace('index.html');
+          } catch (error) {
+            console.error('Unable to sign out:', error);
+            window.alert('La déconnexion a échoué. Veuillez réessayer.');
+          }
+        });
+        document.body.classList.remove('auth-checking');
+        document.getElementById('authLoading').remove();
+      }
+    } catch (error) {
+      console.error('Unable to verify dashboard access:', error);
+      window.location.replace('index.html?reason=setup');
+    }
+  </script>
+
+  <script>
+    // =========================================================================
+    // 1. BILINGUAL DICTIONARY (FR / EN)
+    // =========================================================================
+    let currentLang = 'fr';
+    const I18N = {
+      fr: {
+        badge_open: 'VEILLE CITOYENNE • DONNÉES OUVERTES QC',
+        util_sub: 'Agrégation en temps réel : MSP • MTMD 511 • MSSS',
+        brand_sub: 'Centre de Veille & Sécurité Publique',
+        nav_status: 'État du Réseau',
+        nav_map: 'Carte Tactique',
+        nav_bulletins: 'Bulletins & Avis',
+        nav_directory: "Ressources d'Urgence",
+        urgency_911: 'URGENCE : 9-1-1',
+        btn_report: 'Transmettre un Signalement',
+        ribbon_tag: 'DIRECT OPÉRATIONNEL',
+        hero_kicker: 'POSTE DE COMMANDEMENT CIVIQUE • SURVEILLANCE PROVINCIALE',
+        hero_title: 'Surveillance en Temps Réel des Incidents & Infrastructures',
+        hero_desc: 'Plateforme unifiée d’information publique regroupant les événements de sécurité civile (MSP), les entraves et caméras du réseau routier (Québec 511) ainsi que la capacité hospitalière des urgences (MSSS).',
+        hero_btn_map: 'Ouvrir la Carte Tactique',
+        hero_btn_sync: 'Actualiser les Flux',
+        kpi_msp: 'Sécurité Civile (MSP)',
+        kpi_msp_sub: 'Événements actifs & en surveillance',
+        kpi_road: 'Entraves Routières (511)',
+        kpi_road_sub: 'Chantiers et fermetures MTMD',
+        kpi_cam: 'Caméras de Surveillance',
+        kpi_cam_sub: 'Flux visuels réseau autoroutier',
+        kpi_er: 'Occupation Urgences (MSSS)',
+        kpi_er_sub: 'Taux moyen sur civières (Québec)',
+        map_sec_title: 'Carte Opérationnelle Multi-Flux (Leaflet / OpenStreetMap)',
+        filter_lbl: 'Recherche & Filtrage',
+        layers_lbl: 'Couches de Données',
+        lyr_msp: 'Sécurité civile (MSP)',
+        lyr_er: 'Urgences Hôpitaux (MSSS)',
+        lyr_road: 'Entraves & Travaux (511)',
+        lyr_cam: 'Caméras Routières (511)',
+        sectors_lbl: 'Secteurs Régionaux',
+        auto_sync_note: 'Actualisation automatique toutes les 3 minutes. Cliquez sur un marqueur pour les détails techniques.',
+        bul_sec_title: 'Bulletins Opérationnels & Avis Publics',
+        bul_sec_sub: 'Générés à partir des flux actifs MSP, MSSS et signalements citoyens',
+        dir_sec_title: "Répertoire des Services d'Urgence & Assistance",
+        dir_911_t: 'Urgence Vitale (Police • Pompiers • Ambulance)',
+        dir_911_d: 'Pour tout danger immédiat pour la vie, la sécurité ou les biens partout au Québec.',
+        dir_511_t: 'Québec 511 — Info-Transports',
+        dir_511_d: 'État des routes, fermetures majeures, conditions hivernales et traversiers (MTMD).',
+        dir_811_t: 'Info-Santé & Info-Social',
+        dir_811_d: 'Consultation téléphonique confidentielle 24/7 avec une infirmière ou un intervenant social.',
+        dir_infocrime_t: 'Échec au Crime Québec (Anonyme)',
+        dir_infocrime_d: "Transmission confidentielle et anonyme d'informations liées à des activités criminelles.",
+        footer_sources: 'Sources ouvertes (CC-BY 4.0) : Données Québec, Ministère de la Sécurité publique (MSP), Ministère des Transports (MTMD) et Ministère de la Santé (MSSS).',
+        footer_disclaimer: '<strong>AVIS IMPORTANT :</strong> Ce portail est une plateforme indépendante d’agrégation de données publiques ouvertes. Il n’est pas affilié à la Sûreté du Québec (SQ), au SPVM ni à un corps policier municipal. En cas d’urgence immédiate, composez toujours le <strong>9-1-1</strong>.',
+        modal_tip_title: 'Transmettre un Signalement Citoyen',
+        lbl_cat: "Catégorie d'observation",
+        lbl_city: 'Municipalité / Intersection',
+        lbl_desc: 'Description factuelle',
+        btn_cancel: 'Annuler',
+        btn_submit: 'Enregistrer le Signalement'
+      },
+      en: {
+        badge_open: 'CIVIC WATCH • QUEBEC OPEN DATA',
+        util_sub: 'Real-Time Aggregation: MSP • MTMD 511 • MSSS',
+        brand_sub: 'Public Safety & Situational Watch Center',
+        nav_status: 'Network Status',
+        nav_map: 'Tactical Map',
+        nav_bulletins: 'Bulletins & Advisories',
+        nav_directory: 'Emergency Directory',
+        urgency_911: 'EMERGENCY: 9-1-1',
+        btn_report: 'Submit a Citizen Tip',
+        ribbon_tag: 'LIVE DISPATCH',
+        hero_kicker: 'CIVIC COMMAND POST • PROVINCIAL MONITORING',
+        hero_title: 'Real-Time Incident & Infrastructure Situational Awareness',
+        hero_desc: 'Unified public information portal aggregating Civil Security events (MSP), highway closures and live traffic cameras (Québec 511), and hospital emergency room stretcher occupancy (MSSS).',
+        hero_btn_map: 'Launch Tactical Map',
+        hero_btn_sync: 'Refresh Feeds',
+        kpi_msp: 'Civil Security (MSP)',
+        kpi_msp_sub: 'Active & monitored events',
+        kpi_road: 'Road Closures (511)',
+        kpi_road_sub: 'MTMD roadwork & restrictions',
+        kpi_cam: 'Traffic Cameras',
+        kpi_cam_sub: 'Live highway camera feeds',
+        kpi_er: 'ER Stretcher Occupancy (MSSS)',
+        kpi_er_sub: 'Provincial hospital ER average',
+        map_sec_title: 'Multi-Feed Operational Map (Leaflet / OpenStreetMap)',
+        filter_lbl: 'Search & Filter',
+        layers_lbl: 'Data Layers',
+        lyr_msp: 'Civil Security (MSP)',
+        lyr_er: 'Hospital ERs (MSSS)',
+        lyr_road: 'Roadwork & Closures (511)',
+        lyr_cam: 'Traffic Cameras (511)',
+        sectors_lbl: 'Regional Sectors',
+        auto_sync_note: 'Auto-refreshes every 3 minutes. Click any map marker to inspect live telemetry.',
+        bul_sec_title: 'Operational Bulletins & Public Advisories',
+        bul_sec_sub: 'Generated from active MSP, MSSS feeds and citizen observations',
+        dir_sec_title: 'Emergency Services & Public Assistance Directory',
+        dir_911_t: 'Life-Threatening Emergency (Police • Fire • EMS)',
+        dir_911_d: 'For any immediate threat to life, safety, or property anywhere in Quebec.',
+        dir_511_t: 'Québec 511 — Transport Info',
+        dir_511_d: 'Road conditions, major highway closures, winter driving, and ferries (MTMD).',
+        dir_811_t: 'Info-Santé & Info-Social',
+        dir_811_d: '24/7 confidential phone consultation with a registered nurse or social worker.',
+        dir_infocrime_t: 'Crime Stoppers Quebec (Anonymous)',
+        dir_infocrime_d: 'Confidential and anonymous reporting of information related to criminal activity.',
+        footer_sources: 'Open Data Sources (CC-BY 4.0): Données Québec, Ministry of Public Security (MSP), Ministry of Transport (MTMD), and Ministry of Health (MSSS).',
+        footer_disclaimer: '<strong>IMPORTANT NOTICE:</strong> This portal is an independent open-data civic situational-awareness platform. It is not affiliated with the Sûreté du Québec (SQ), SPVM, or any municipal police service. In an emergency, always dial <strong>9-1-1</strong>.',
+        modal_tip_title: 'Submit a Citizen Observation / Tip',
+        lbl_cat: 'Observation Category',
+        lbl_city: 'Municipality / Intersection',
+        lbl_desc: 'Factual Description',
+        btn_cancel: 'Cancel',
+        btn_submit: 'Submit Report'
+      }
+    };
+
+    function applyTranslations() {
+      const dict = I18N[currentLang];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.innerHTML = dict[key];
+      });
+      document.getElementById('langToggleBtn').textContent = currentLang === 'fr' ? 'EN' : 'FR';
+    }
+
+    document.getElementById('langToggleBtn').addEventListener('click', () => {
+      currentLang = currentLang === 'fr' ? 'en' : 'fr';
+      applyTranslations();
+      renderBulletins();
+    });
+
+    // Live EST & UTC Clocks
+    function updateClocks() {
+      const now = new Date();
+      document.getElementById('clockEst').textContent = 'EST ' + now.toLocaleTimeString('en-CA', { timeZone: 'America/Toronto', hour12: false });
+      document.getElementById('clockUtc').textContent = 'UTC ' + now.toISOString().substring(11, 19);
+    }
+    setInterval(updateClocks, 1000);
+    updateClocks();
+
+    // =========================================================================
+    // 2. PURE LEAFLET.JS MAP (NO CARTODB)
+    // =========================================================================
+    const osmDark = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      className: 'osm-tactical-tiles',
+      attribution: '&copy; OpenStreetMap | Données Québec • MTMD • MSSS'
+    });
+    const osmLight = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap | Données Québec • MTMD • MSSS'
+    });
+    const esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 18,
+      attribution: 'Tiles &copy; Esri'
+    });
+
+    const map = L.map('map', {
+      center: [45.55, -73.65],
+      zoom: 10,
+      layers: [osmDark]
+    });
+
+    L.control.layers({
+      'OpenStreetMap (Tactique)': osmDark,
+      'OpenStreetMap (Standard)': osmLight,
+      'Satellite (Esri)': esriSat
+    }, null, { position: 'topright' }).addTo(map);
+
+    const mspGroup = L.layerGroup().addTo(map);
+    const erGroup = L.layerGroup().addTo(map);
+    const roadCluster = L.markerClusterGroup({ maxClusterRadius: 45, disableClusteringAtZoom: 14 }).addTo(map);
+    const camCluster = L.markerClusterGroup({ maxClusterRadius: 50, disableClusteringAtZoom: 14 }).addTo(map);
+
+    // =========================================================================
+    // 3. LIVE QUEBEC OPEN-DATA APIS & HOSPITAL DIRECTORY
+    // =========================================================================
+    const ENDPOINTS = {
+      mspActive: 'https://geoegl.msp.gouv.qc.ca/apis/wss/historiquesc.fcgi?service=WFS&version=1.1.0&request=GetFeature&typename=risc_evenement_igo_public_dq&outputformat=geojson&srsname=EPSG:4326',
+      mspPotential: 'https://geoegl.msp.gouv.qc.ca/apis/wss/historiquesc.fcgi?service=WFS&version=1.1.0&request=GetFeature&typename=risc_evenement_igo_public_dq_potentiels&outputformat=geojson&srsname=EPSG:4326',
+      mtmdRoadwork: 'https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0&request=GetFeature&typename=ms:chantiers_mtmdet&srsname=EPSG:4326&outputformat=geojson',
+      mtmdCameras: 'https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0&request=GetFeature&typename=ms:infos_cameras&srsname=EPSG:4326&outputformat=geojson',
+      msssCsv: 'https://www.msss.gouv.qc.ca/professionnels/statistiques/documents/urgences/Releve_horaire_urgences_7jours_nbpers.csv',
+      msssCkan: 'https://www.donneesquebec.ca/api/3/action/datastore_search?resource_id=b256f87f-40ec-4c79-bdba-a23e9c50e741&limit=250'
+    };
+
+    const HOSPITAL_COORDS = [
+      { keys: ['chum', 'universite de montreal'], lat: 45.5113, lng: -73.5575 },
+      { keys: ['cusm', 'glen', 'royal victoria'], lat: 45.4731, lng: -73.6012 },
+      { keys: ['general de montreal', 'montreal general'], lat: 45.4972, lng: -73.5886 },
+      { keys: ['general juif', 'jewish general'], lat: 45.4963, lng: -73.6303 },
+      { keys: ['sacre-coeur', 'sacre coeur'], lat: 45.5326, lng: -73.7124 },
+      { keys: ['maisonneuve-rosemont'], lat: 45.5768, lng: -73.5621 },
+      { keys: ['notre-dame'], lat: 45.5257, lng: -73.5638 },
+      { keys: ['jean-talon'], lat: 45.5458, lng: -73.6197 },
+      { keys: ['fleury'], lat: 45.5653, lng: -73.6531 },
+      { keys: ['santa cabrini'], lat: 45.5736, lng: -73.5754 },
+      { keys: ['verdun'], lat: 45.4593, lng: -73.5681 },
+      { keys: ['lasalle'], lat: 45.4241, lng: -73.6378 },
+      { keys: ['lachine'], lat: 45.4385, lng: -73.6798 },
+      { keys: ['lakeshore'], lat: 45.4486, lng: -73.8164 },
+      { keys: ['sainte-justine'], lat: 45.5028, lng: -73.6242 },
+      { keys: ['cite-de-la-sante', 'cite de la sante'], lat: 45.5968, lng: -73.7115 },
+      { keys: ['charles-lemoyne'], lat: 45.4852, lng: -73.4793 },
+      { keys: ['pierre-boucher'], lat: 45.5364, lng: -73.4628 },
+      { keys: ['haut-richelieu'], lat: 45.3247, lng: -73.2741 },
+      { keys: ['anna-laberge'], lat: 45.3578, lng: -73.7224 },
+      { keys: ['saint-jerome'], lat: 45.7812, lng: -74.0049 },
+      { keys: ['saint-eustache'], lat: 45.5612, lng: -73.9041 },
+      { keys: ['pierre-le gardeur'], lat: 45.7369, lng: -73.4812 },
+      { keys: ['joliette', 'lanaudiere'], lat: 46.0332, lng: -73.4375 },
+      { keys: ['enfant-jesus'], lat: 46.8364, lng: -71.2261 },
+      { keys: ['saint-francois d\'assise'], lat: 46.8267, lng: -71.2398 },
+      { keys: ['hotel-dieu de quebec'], lat: 46.8152, lng: -71.2094 },
+      { keys: ['chul', 'universite laval'], lat: 46.7695, lng: -71.2845 },
+      { keys: ['hotel-dieu de levis'], lat: 46.8042, lng: -71.1819 },
+      { keys: ['hull'], lat: 45.4426, lng: -75.7335 },
+      { keys: ['gatineau'], lat: 45.4851, lng: -75.6542 },
+      { keys: ['fleurimont'], lat: 45.4468, lng: -71.8712 },
+      { keys: ['hotel-dieu de sherbrooke'], lat: 45.4092, lng: -71.8891 },
+      { keys: ['trois-rivieres'], lat: 46.3578, lng: -72.5612 },
+      { keys: ['chicoutimi'], lat: 48.4235, lng: -71.0518 },
+      { keys: ['rimouski'], lat: 48.4452, lng: -68.5289 },
+      { keys: ['granby'], lat: 45.4056, lng: -72.7289 },
+      { keys: ['drummondville', 'sainte-croix'], lat: 45.8812, lng: -72.4845 },
+      { keys: ['saint-hyacinthe', 'honore-mercier'], lat: 45.6352, lng: -72.9581 }
+    ];
+
+    function normalizeStr(s) {
+      return (s || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function resolveHospitalCoords(name) {
+      const norm = normalizeStr(name);
+      for (const h of HOSPITAL_COORDS) {
+        if (h.keys.some(k => norm.includes(k))) return { lat: h.lat, lng: h.lng };
+      }
+      return null;
+    }
+
+    async function fetchWithFallback(url, encoding = 'utf-8') {
+      const strategies = [
+        { mode: 'LIVE', target: url },
+        { mode: 'PROXY', target: `https://corsproxy.io/?${encodeURIComponent(url)}` },
+        { mode: 'PROXY', target: `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` }
+      ];
+      for (const st of strategies) {
+        try {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 10000);
+          const res = await fetch(st.target, { signal: ctrl.signal });
+          clearTimeout(t);
+          if (!res.ok) continue;
+          const buf = await res.arrayBuffer();
+          const text = new TextDecoder(encoding).decode(buf);
+          if (text && text.trim().length > 20) return { text, mode: st.mode };
+        } catch (e) { /* try next */ }
+      }
+      throw new Error('Fetch failed');
+    }
+
+    function setStatusBadge(id, mode) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = mode;
+      el.className = 'kpi-status ' + (mode === 'LIVE' ? 'st-live' : mode === 'PROXY' ? 'st-proxy' : 'st-err');
+    }
+
+    function parseCsvLine(line, sep) {
+      const out = [];
+      let cur = '', inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') inQ = !inQ;
+        else if (c === sep && !inQ) { out.push(cur.trim()); cur = ''; }
+        else cur += c;
+      }
+      out.push(cur.trim());
+      return out;
+    }
+
+    let state = { msp: [], er: [], road: [], cam: [], citizenTips: [] };
+
+    async function fetchAllData() {
+      // 1. MSP Civil Security
+      try {
+        const [r1, r2] = await Promise.all([
+          fetchWithFallback(ENDPOINTS.mspActive),
+          fetchWithFallback(ENDPOINTS.mspPotential).catch(() => ({ text: '{"features":[]}', mode: 'LIVE' }))
+        ]);
+        const j1 = JSON.parse(r1.text);
+        const j2 = JSON.parse(r2.text);
+        state.msp = [
+          ...(j1.features || []).map(f => ({ ...f, _pot: false })),
+          ...(j2.features || []).map(f => ({ ...f, _pot: true }))
+        ];
+        setStatusBadge('badgeMsp', r1.mode);
+      } catch (e) {
+        setStatusBadge('badgeMsp', 'OFFLINE');
+      }
+
+      // 2. MTMD 511 Roadwork & Cameras
+      try {
+        const rRoad = await fetchWithFallback(ENDPOINTS.mtmdRoadwork);
+        state.road = JSON.parse(rRoad.text).features || [];
+        setStatusBadge('badgeRoad', rRoad.mode);
+      } catch (e) {
+        setStatusBadge('badgeRoad', 'OFFLINE');
+      }
+
+      try {
+        const rCam = await fetchWithFallback(ENDPOINTS.mtmdCameras);
+        state.cam = JSON.parse(rCam.text).features || [];
+        setStatusBadge('badgeCam', rCam.mode);
+      } catch (e) {
+        setStatusBadge('badgeCam', 'OFFLINE');
+      }
+
+      // 3. MSSS Emergency Rooms (Windows-1252 CSV + CKAN fallback)
+      try {
+        const rCsv = await fetchWithFallback(ENDPOINTS.msssCsv, 'windows-1252');
+        const lines = rCsv.text.split(/\r?\n/).filter(l => l.trim().length > 0);
+        const sep = lines[0].includes(';') ? ';' : ',';
+        const headers = parseCsvLine(lines[0], sep).map(h => normalizeStr(h));
+        const idxInst = headers.findIndex(h => h.includes('installation') && !h.includes('no_permis'));
+        const idxEtab = headers.findIndex(h => h.includes('etablissement'));
+        const idxFonc = headers.findIndex(h => h.includes('fonctionnelles'));
+        const idxOcc = headers.findIndex(h => h.includes('occupees'));
+        const idx24 = headers.findIndex(h => h.includes('24_heures'));
+        const idxHeure = headers.findIndex(h => h.includes('extraction') || h.includes('mise_a_jour'));
+
+        const parsed = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cols = parseCsvLine(lines[i], sep);
+          const name = cols[idxInst] || cols[idxEtab] || '';
+          const coords = resolveHospitalCoords(name);
+          const fonc = parseInt(cols[idxFonc], 10) || 0;
+          const occ = parseInt(cols[idxOcc], 10) || 0;
+          if (!coords || fonc <= 0) continue;
+          parsed.push({
+            name,
+            fonc,
+            occ,
+            pct: Math.round((occ / fonc) * 100),
+            wait24: parseInt(cols[idx24], 10) || 0,
+            updated: cols[idxHeure] || '',
+            lat: coords.lat,
+            lng: coords.lng
+          });
+        }
+        state.er = parsed;
+        setStatusBadge('badgeEr', rCsv.mode);
+      } catch (e) {
+        try {
+          const rCkan = await fetchWithFallback(ENDPOINTS.msssCkan, 'utf-8');
+          const recs = (JSON.parse(rCkan.text).result || {}).records || [];
+          const parsed = [];
+          for (const r of recs) {
+            const name = r.Installation || r.Etablissement || '';
+            const coords = resolveHospitalCoords(name);
+            const fonc = parseInt(r.Nombre_de_civieres_fonctionnelles, 10) || 0;
+            const occ = parseInt(r.Nombre_de_civieres_occupees, 10) || 0;
+            if (!coords || fonc <= 0) continue;
+            parsed.push({
+              name, fonc, occ,
+              pct: Math.round((occ / fonc) * 100),
+              wait24: parseInt(r.Nombre_de_patients_sur_civiere_plus_de_24_heures, 10) || 0,
+              updated: r.Mise_a_jour || '',
+              lat: coords.lat, lng: coords.lng
+            });
+          }
+          state.er = parsed;
+          setStatusBadge('badgeEr', rCkan.mode);
+        } catch (e2) {
+          setStatusBadge('badgeEr', 'OFFLINE');
+        }
+      }
+
+      updateKpisAndMap();
+      renderBulletins();
+      document.getElementById('lastSyncLabel').textContent = `Dernière synchro: ${new Date().toLocaleTimeString('fr-CA')}`;
+    }
+
+    function extractCoords(geom) {
+      if (!geom) return null;
+      if (geom.type === 'Point') return [geom.coordinates[1], geom.coordinates[0]];
+      if (geom.type === 'MultiPoint' && geom.coordinates.length) return [geom.coordinates[0][1], geom.coordinates[0][0]];
+      if (geom.type === 'LineString' && geom.coordinates.length) {
+        const m = geom.coordinates[Math.floor(geom.coordinates.length / 2)];
+        return [m[1], m[0]];
+      }
+      if (geom.type === 'MultiLineString' && geom.coordinates.length && geom.coordinates[0].length) {
+        const m = geom.coordinates[0][Math.floor(geom.coordinates[0].length / 2)];
+        return [m[1], m[0]];
+      }
+      return null;
+    }
+
+    function updateKpisAndMap() {
+      document.getElementById('valMsp').textContent = state.msp.length;
+      document.getElementById('valRoad').textContent = state.road.length;
+      document.getElementById('valCam').textContent = state.cam.length;
+
+      const avgEr = state.er.length
+        ? Math.round(state.er.reduce((acc, h) => acc + h.pct, 0) / state.er.length)
+        : 0;
+      document.getElementById('valEr').textContent = state.er.length ? `${avgEr}%` : '--%';
+
+      // Ribbon summary
+      const ribbon = document.getElementById('ribbonText');
+      if (state.msp.length > 0) {
+        const top = state.msp[0].properties || {};
+        ribbon.textContent = `ALERTE MSP ACTIVE : ${top.alea || 'Événement'} — ${top.municipalite || 'Québec'} (${state.msp.length} événement(s) suivi(s) • Occupation moyenne urgences : ${avgEr}%)`;
+      } else {
+        ribbon.textContent = `VEILLE NOMINALE : ${state.road.length} entraves MTMD 511 actives • ${state.cam.length} caméras en ligne • Occupation moyenne des urgences : ${avgEr}%`;
+      }
+
+      // Render Map Layers with Filter
+      const q = normalizeStr(document.getElementById('mapSearchInput').value);
+      mspGroup.clearLayers();
+      erGroup.clearLayers();
+      roadCluster.clearLayers();
+      camCluster.clearLayers();
+
+      let cMsp = 0, cEr = 0, cRoad = 0, cCam = 0;
+
+      for (const f of state.msp) {
+        const p = f.properties || {};
+        const ll = extractCoords(f.geometry);
+        if (!ll) continue;
+        const alea = p.alea || 'Événement Sécurité Civile';
+        const muni = p.municipalite || 'Québec';
+        const sev = p.severite || (f._pot ? 'En surveillance' : 'Active');
+        if (q && !normalizeStr(`${alea} ${muni} ${sev}`).includes(q)) continue;
+        cMsp++;
+
+        const icon = L.divIcon({ className: '', html: `<div class="pin-msp">!</div>`, iconSize: [24, 24], iconAnchor: [12, 12] });
+        mspGroup.addLayer(L.marker(ll, { icon }).bindPopup(`
+          <div style="color:#f87171; font-weight:800; font-size:11px;">MSP SÉCURITÉ CIVILE • ${sev}</div>
+          <div style="font-weight:700; font-size:13.5px; margin:3px 0;">${alea}</div>
+          <div>Municipalité : <strong>${muni}</strong></div>
+        `));
+      }
+
+      for (const h of state.er) {
+        if (q && !normalizeStr(h.name).includes(q)) continue;
+        cEr++;
+        const bg = h.pct >= 130 ? '#dc2626' : h.pct >= 100 ? '#d97706' : '#059669';
+        const icon = L.divIcon({ className: '', html: `<div class="pin-er" style="background:${bg};">H ${h.pct}%</div>`, iconSize: [52, 20], iconAnchor: [26, 10] });
+        erGroup.addLayer(L.marker([h.lat, h.lng], { icon }).bindPopup(`
+          <div style="color:#c084fc; font-weight:800; font-size:11px;">MSSS URGENCE • ${h.pct}%</div>
+          <div style="font-weight:700; font-size:13px; margin:3px 0;">${h.name}</div>
+          <div>Civières occupées : <strong>${h.occ} / ${h.fonc}</strong></div>
+          <div>Attente &gt; 24h : <strong>${h.wait24}</strong></div>
+        `));
+      }
+
+      for (const f of state.road) {
+        const p = f.properties || {};
+        const ll = extractCoords(f.geometry);
+        if (!ll) continue;
+        const route = p.num_route || p.nom_route || 'Route';
+        const muni = p.municipalite || '';
+        const desc = p.description || p.nature_travaux || 'Travaux routiers MTMD';
+        if (q && !normalizeStr(`${route} ${muni} ${desc}`).includes(q)) continue;
+        cRoad++;
+        const icon = L.divIcon({ className: '', html: `<div class="pin-road">▲</div>`, iconSize: [20, 20], iconAnchor: [10, 10] });
+        roadCluster.addLayer(L.marker(ll, { icon }).bindPopup(`
+          <div style="color:#fbbf24; font-weight:800; font-size:11px;">QUÉBEC 511 • ENTRAVE</div>
+          <div style="font-weight:700; margin:3px 0;">Route ${route} ${muni ? `(${muni})` : ''}</div>
+          <div>${desc}</div>
+        `));
+      }
+
+      for (const f of state.cam) {
+        const p = f.properties || {};
+        const ll = extractCoords(f.geometry);
+        if (!ll) continue;
+        const title = p.description || p.nom || `Caméra #${p.id_camera || ''}`;
+        const imgUrl = p.url_image || p.url || '';
+        if (q && !normalizeStr(title).includes(q)) continue;
+        cCam++;
+        const icon = L.divIcon({
+          className: '',
+          html: `<div class="pin-cam"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>`,
+          iconSize: [20, 20], iconAnchor: [10, 10]
+        });
+        const src = imgUrl ? `${imgUrl}${imgUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
+        camCluster.addLayer(L.marker(ll, { icon }).bindPopup(`
+          <div style="color:#38bdf8; font-weight:800; font-size:11px;">QUÉBEC 511 • CAMÉRA LIVE</div>
+          <div style="font-weight:700; margin:3px 0;">${title}</div>
+          ${src ? `<img class="pop-cam-img" src="${src}" alt="Caméra 511" onerror="this.style.display='none'"/>` : ''}
+        `));
+      }
+
+      document.getElementById('cntMsp').textContent = cMsp;
+      document.getElementById('cntEr').textContent = cEr;
+      document.getElementById('cntRoad').textContent = cRoad;
+      document.getElementById('cntCam').textContent = cCam;
+    }
+
+    // =========================================================================
+    // 4. OPERATIONAL BULLETINS & MODALS
+    // =========================================================================
+    let currentBulletins = [];
+
+    function renderBulletins() {
+      const items = [];
+
+      // Citizen tips first
+      for (const tip of state.citizenTips) {
+        items.push({
+          ref: tip.ref,
+          tag: 'SIGNALEMENT CITOYEN',
+          color: '#eab308',
+          title: `${tip.category} — ${tip.location}`,
+          body: tip.desc,
+          time: tip.time,
+          details: `<strong>Numéro de dossier :</strong> ${tip.ref}<br><strong>Catégorie :</strong> ${tip.category}<br><strong>Secteur :</strong> ${tip.location}<br><strong>Heure :</strong> ${tip.time}<br><br>${tip.desc}`
+        });
+      }
+
+      // Top MSP events
+      state.msp.slice(0, 3).forEach((f, i) => {
+        const p = f.properties || {};
+        items.push({
+          ref: `MSP-QC-${100 + i}`,
+          tag: 'SÉCURITÉ CIVILE',
+          color: '#ef4444',
+          title: `${p.alea || 'Incident'} — ${p.municipalite || 'Québec'}`,
+          body: `Niveau de sévérité : ${p.severite || 'Actif'}. Suivi opérationnel en cours par les autorités municipales et le MSP.`,
+          time: p.date_signalement || 'En cours',
+          details: `<strong>Source :</strong> Ministère de la Sécurité publique (WFS)<br><strong>Aléa :</strong> ${p.alea || 'N/D'}<br><strong>Municipalité :</strong> ${p.municipalite || 'N/D'}<br><strong>Sévérité :</strong> ${p.severite || 'N/D'}<br><strong>Adresse / Secteur :</strong> ${p.adresse || 'Non précisé'}`
+        });
+      });
+
+      // Top Overcrowded ERs
+      [...state.er].sort((a, b) => b.pct - a.pct).slice(0, 3).forEach((h, i) => {
+        items.push({
+          ref: `MSSS-URG-${200 + i}`,
+          tag: `URGENCE ${h.pct}%`,
+          color: '#a855f7',
+          title: h.name,
+          body: `Occupation des civières à ${h.pct}% (${h.occ} civières occupées sur ${h.fonc} fonctionnelles). ${h.wait24} patient(s) sur civière depuis plus de 24h.`,
+          time: h.updated || 'Relevé horaire',
+          details: `<strong>Établissement :</strong> ${h.name}<br><strong>Taux d'occupation :</strong> ${h.pct}%<br><strong>Civières :</strong> ${h.occ} occupées / ${h.fonc} fonctionnelles<br><strong>Séjour &gt; 24h :</strong> ${h.wait24} patient(s)<br><strong>Mise à jour :</strong> ${h.updated || 'Horaire'}`
+        });
+      });
+
+      currentBulletins = items;
+      const grid = document.getElementById('bulletinsGrid');
+      grid.innerHTML = items.map((b, idx) => `
+        <article class="bulletin-card" style="border-left-color:${b.color};">
+          <div>
+            <div class="bulletin-meta">
+              <span class="bulletin-badge" style="background:${b.color}22; color:${b.color}; border:1px solid ${b.color};">${b.tag}</span>
+              <span style="color:var(--text-muted);">${b.ref}</span>
+            </div>
+            <h3 class="bulletin-title" style="margin-top:8px;">${b.title}</h3>
+            <p class="bulletin-body" style="margin-top:5px;">${b.body}</p>
+          </div>
+          <div class="bulletin-footer">
+            <span>${b.time}</span>
+            <button class="btn-details" onclick="openBulletinDetail(${idx})">${currentLang === 'fr' ? 'Consulter' : 'Inspect'}</button>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    window.openBulletinDetail = function(idx) {
+      const b = currentBulletins[idx];
+      if (!b) return;
+      document.getElementById('detailModalTag').textContent = `${b.tag} • ${b.ref}`;
+      document.getElementById('detailModalBody').innerHTML = b.details;
+      document.getElementById('detailModal').classList.add('open');
+    };
+
+    // Modal Controls
+    const tipModal = document.getElementById('tipModal');
+    document.getElementById('openTipModalBtn').addEventListener('click', () => tipModal.classList.add('open'));
+    document.getElementById('closeTipModal').addEventListener('click', () => tipModal.classList.remove('open'));
+    document.getElementById('cancelTipBtn').addEventListener('click', () => tipModal.classList.remove('open'));
+    document.getElementById('closeDetailModal').addEventListener('click', () => document.getElementById('detailModal').classList.remove('open'));
+
+    document.getElementById('tipForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const ref = `QV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      state.citizenTips.unshift({
+        ref,
+        category: document.getElementById('tipCategory').value,
+        location: document.getElementById('tipLocation').value,
+        desc: document.getElementById('tipDesc').value,
+        time: new Date().toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })
+      });
+      e.target.reset();
+      tipModal.classList.remove('open');
+      renderBulletins();
+      document.getElementById('section-bulletins').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Map Controls
+    document.getElementById('chkMsp').addEventListener('change', e => e.target.checked ? map.addLayer(mspGroup) : map.removeLayer(mspGroup));
+    document.getElementById('chkEr').addEventListener('change', e => e.target.checked ? map.addLayer(erGroup) : map.removeLayer(erGroup));
+    document.getElementById('chkRoad').addEventListener('change', e => e.target.checked ? map.addLayer(roadCluster) : map.removeLayer(roadCluster));
+    document.getElementById('chkCam').addEventListener('change', e => e.target.checked ? map.addLayer(camCluster) : map.removeLayer(camCluster));
+    document.getElementById('mapSearchInput').addEventListener('input', updateKpisAndMap);
+
+    document.querySelectorAll('.sector-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        map.flyTo([parseFloat(btn.dataset.lat), parseFloat(btn.dataset.lng)], parseInt(btn.dataset.zoom, 10), { duration: 1.1 });
+      });
+    });
+
+    document.getElementById('refreshAllBtn').addEventListener('click', fetchAllData);
+
+    // Auto-refresh every 3 minutes
+    setInterval(fetchAllData, 180000);
+
+    // Initial Boot
+    fetchAllData();
+  </script>
+</body>
+</html>
