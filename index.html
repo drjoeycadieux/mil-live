@@ -316,7 +316,7 @@
 
     function errorMessage(error) {
       if (error.code === 'access/pending') {
-        return 'Votre demande n’a pas encore été approuvée, ou votre compte n’est pas encore activé.';
+        return 'Connexion réussie, mais l’accès n’est pas approuvé. Dans Firestore (projet mil-live), créez userProfiles avec l’ID UID de cet utilisateur, puis ajoutez approved: true et email: son adresse Firebase Authentication exacte.';
       }
       if (!firebaseConfigured) {
         return 'Le portail doit être configuré avec les paramètres de votre projet Firebase avant utilisation. Consultez FIREBASE_SETUP.md.';
@@ -332,6 +332,18 @@
       }
       if (error.code === 'auth/user-disabled') {
         return 'Ce compte est désactivé. Contactez l’administrateur.';
+      }
+      if (error.code === 'auth/operation-not-allowed') {
+        return 'La connexion par courriel et mot de passe n’est pas activée. Activez le fournisseur Email/Password dans Firebase Authentication.';
+      }
+      if (error.code === 'auth/network-request-failed') {
+        return 'Connexion au service Firebase impossible. Vérifiez votre réseau et réessayez.';
+      }
+      if (error.code === 'auth/invalid-api-key') {
+        return 'La clé API Firebase est invalide. Vérifiez firebase-config.js et le projet Firebase sélectionné.';
+      }
+      if (error.code === 'permission-denied') {
+        return 'Firebase Authentication a accepté le compte, mais Firestore a refusé la vérification d’accès. Publiez firestore.rules dans le projet mil-live puis créez le profil userProfiles/{UID} avec approved: true et l’adresse courriel exacte.';
       }
       return 'La demande n’a pas pu être traitée. Vérifiez la configuration Firebase et réessayez.';
     }
